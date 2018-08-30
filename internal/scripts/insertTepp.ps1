@@ -1,14 +1,14 @@
 ﻿if (Get-Command TabExpansionPlusPlus\Register-ArgumentCompleter -ErrorAction Ignore) {
-	$script:TEPP = $true
+    $script:TEPP = $true
 }
 else {
-	$script:TEPP = $false
+    $script:TEPP = $false
 }
 
 $functions = Get-ChildItem function:\*-Dba*
 [Sqlcollaborative.Dbatools.TabExpansion.TabExpansionHost]::DbatoolsCommands = $functions
 $names = $functions.Name
- 
+
 #region Automatic TEPP by parameter name
 Register-DbaTeppArgumentCompleter -Command $names -Parameter Alert -Name Alert -All
 Register-DbaTeppArgumentCompleter -Command $names -Parameter AlertCategory -Name AlertCategory -All
@@ -65,6 +65,7 @@ Register-DbaTeppArgumentCompleter -Command $names -Parameter ServerTrigger -Name
 Register-DbaTeppArgumentCompleter -Command $names -Parameter Session -Name Session -All
 Register-DbaTeppArgumentCompleter -Command $names -Parameter Snapshot -Name Snapshot -All
 Register-DbaTeppArgumentCompleter -Command $names -Parameter SqlInstance -Name SqlInstance -All
+Register-DbaTeppArgumentCompleter -Command $names -Parameter InstanceProperty -Name InstanceProperty -All
 #endregion Automatic TEPP by parameter name
 
 #region Explicit TEPP
@@ -76,4 +77,6 @@ Register-DbaTeppArgumentCompleter -Command "Get-DbaProcess", "Stop-DbaProcess" -
 Register-DbaTeppArgumentCompleter -Command "Get-DbaProcess", "Stop-DbaProcess" -Parameter Hostname -Name processHostname
 Register-DbaTeppArgumentCompleter -Command "Get-DbaProcess", "Stop-DbaProcess" -Parameter Program -Name processProgram
 Register-DbaTeppArgumentCompleter -Command "Get-DbaProcess", "Stop-DbaProcess" -Parameter Spid -Name processSpid
+Register-DbaTeppArgumentCompleter -Command "Import-DbaXESessionTemplate", "Get-DbaXESessionTemplate", "Export-DbaXESessionTemplate" -Parameter Template -Name xesessiontemplate
+Register-DbaTeppArgumentCompleter -Command "Import-DbaPfDataCollectorSetTemplate", "Get-DbaPfDataCollectorSetTemplate", "Export-DbaPfDataCollectorSetTemplate"  -Parameter Template -Name perfmontemplate
 #endregion Explicit TEPP

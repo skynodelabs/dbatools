@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Management.Automation;
+using System.Reflection;
 
 namespace Sqlcollaborative.Dbatools.Utility
 {
@@ -32,6 +34,16 @@ namespace Sqlcollaborative.Dbatools.Utility
         /// Formating string for time-style datetime objects
         /// </summary>
         public static string FormatTime = "HH:mm:ss";
+
+        /// <summary>
+        /// The number of digits a size object shows by default
+        /// </summary>
+        public static int SizeDigits = 2;
+
+        /// <summary>
+        /// The way size objects are usually displayed
+        /// </summary>
+        public static SizeStyle SizeStyle = SizeStyle.Dynamic;
 
         /// <summary>
         /// Implement's VB's Like operator logic.
@@ -142,6 +154,44 @@ namespace Sqlcollaborative.Dbatools.Utility
                 else set.Add(charList[i]);
             }
             return set;
+        }
+
+        /// <summary>
+        /// Returns the current callstack
+        /// </summary>
+        public static IEnumerable<CallStackFrame> Callstack
+        {
+            get
+            {
+                // Works on PS4+
+                try { return _CallstackNew; }
+
+                // Needed for PS3
+                catch { return _CallstackOld; }
+            }
+        }
+
+        /// <summary>
+        /// Returns the current callstack on PS4+
+        /// </summary>
+        private static IEnumerable<CallStackFrame> _CallstackNew
+        {
+            get
+            {
+                return System.Management.Automation.Runspaces.Runspace.DefaultRunspace.Debugger.GetCallStack();
+            }
+        }
+
+        /// <summary>
+        /// Returns the current callstack on PS3
+        /// </summary>
+        private static IEnumerable<CallStackFrame> _CallstackOld
+        {
+            get
+            {
+                MethodInfo method = System.Management.Automation.Runspaces.Runspace.DefaultRunspace.Debugger.GetType().GetMethod("GetCallStack", BindingFlags.NonPublic | BindingFlags.Instance);
+                return (IEnumerable<CallStackFrame>)method.Invoke(System.Management.Automation.Runspaces.Runspace.DefaultRunspace.Debugger, null);
+            }
         }
     }
 }

@@ -1,96 +1,91 @@
+#ValidationTags#Messaging,FlowControl,Pipeline,CodeStyle#
 function Remove-DbaOrphanUser {
     <#
-		.SYNOPSIS
-			Drop orphan users with no existing login to map
+        .SYNOPSIS
+            Drop orphan users with no existing login to map
 
-		.DESCRIPTION
-			An orphan user is defined by a user that does not have their matching login. (Login property = "").
+        .DESCRIPTION
+            An orphan user is defined by a user that does not have their matching login. (Login property = "").
 
-			If user is the owner of the schema with the same name and if if the schema does not have any underlying objects the schema will be dropped.
+            If user is the owner of the schema with the same name and if if the schema does not have any underlying objects the schema will be dropped.
 
-			If user owns more than one schema, the owner of the schemas that does not have the same name as the user, will be changed to 'dbo'. If schemas have underlying objects, you must specify the -Force parameter so the user can be dropped.
+            If user owns more than one schema, the owner of the schemas that does not have the same name as the user, will be changed to 'dbo'. If schemas have underlying objects, you must specify the -Force parameter so the user can be dropped.
 
-			If exists a login to map the drop will not be performed unless you specify the -Force parameter (only when calling from Repair-DbaOrphanUser.
+            If exists a login to map the drop will not be performed unless you specify the -Force parameter (only when calling from Repair-DbaOrphanUser.
 
         .PARAMETER SqlInstance
             The SQL Server Instance to connect to.
 
-		.PARAMETER SqlCredential
-			Allows you to login to servers using SQL Logins instead of Windows Authentication (AKA Integrated or Trusted). To use:
+        .PARAMETER SqlCredential
+            Login to the target instance using alternative credentials. Windows and SQL Authentication supported. Accepts credential objects (Get-Credential)
 
-			$scred = Get-Credential, then pass $scred object to the -SqlCredential parameter.
+        .PARAMETER Database
+            Specifies the database(s) to process. Options for this list are auto-populated from the server. If unspecified, all databases will be processed.
 
-			Windows Authentication will be used if SqlCredential is not specified. SQL Server does not accept Windows credentials being passed as credentials.
+        .PARAMETER ExcludeDatabase
+            Specifies the database(s) to exclude from processing. Options for this list are auto-populated from the server
 
-			To connect as a different Windows user, run PowerShell as that user.
+        .PARAMETER User
+            Specifies the list of users to remove.
 
-		.PARAMETER Database
-			Specifies the database(s) to process. Options for this list are auto-populated from the server. If unspecified, all databases will be processed.
+        .PARAMETER Force
+            If this switch is enabled:
+                If exists any schema which owner is the User, this will force the change of the owner to 'dbo'.
+                If exists a login to map the drop will not be performed unless you specify this parameter.
 
-		.PARAMETER ExcludeDatabase
-			Specifies the database(s) to exclude from processing. Options for this list are auto-populated from the server
+        .PARAMETER WhatIf
+            If this switch is enabled, no actions are performed but informational messages will be displayed that explain what would happen if the command were to run.
 
-		.PARAMETER User
-			Specifies the list of users to remove.
+        .PARAMETER Confirm
+            If this switch is enabled, you will be prompted for confirmation before executing any operations that change state.
 
-		.PARAMETER Force
-			If this switch is enabled:
-				If exists any schema which owner is the User, this will force the change of the owner to 'dbo'.
-				If exists a login to map the drop will not be performed unless you specify this parameter.
+        .PARAMETER EnableException
+            By default, when something goes wrong we try to catch it, interpret it and give you a friendly warning message.
+            This avoids overwhelming you with "sea of red" exceptions, but is inconvenient because it basically disables advanced scripting.
+            Using this switch turns this "nice by default" feature off and enables you to catch exceptions with your own try/catch.
 
-		.PARAMETER WhatIf
-			If this switch is enabled, no actions are performed but informational messages will be displayed that explain what would happen if the command were to run.
+        .NOTES
+            Tags: Orphan, Database, Security, Login
+            Author: Claudio Silva (@ClaudioESSilva)
+            Editor: Simone Bizzotto (@niphlod)
+            Website: https://dbatools.io
+            Copyright: (C) Chrissy LeMaire, clemaire@gmail.com
+            License: MIT https://opensource.org/licenses/MIT
 
-		.PARAMETER Confirm
-			If this switch is enabled, you will be prompted for confirmation before executing any operations that change state.
+        .LINK
+            https://dbatools.io/Remove-DbaOrphanUser
 
-		.PARAMETER EnableException
-			By default, when something goes wrong we try to catch it, interpret it and give you a friendly warning message.
-			This avoids overwhelming you with "sea of red" exceptions, but is inconvenient because it basically disables advanced scripting.
-			Using this switch turns this "nice by default" feature off and enables you to catch exceptions with your own try/catch.
+        .EXAMPLE
+            Remove-DbaOrphanUser -SqlInstance sql2005
 
-		.NOTES
-			Tags: Orphan, Databases
-			Author: Claudio Silva (@ClaudioESSilva)
+            Finds and drops all orphan users without matching Logins in all databases present on server 'sql2005'.
 
-			Website: https://dbatools.io
-			Copyright: (C) Chrissy LeMaire, clemaire@gmail.com
-			License: GNU GPL v3 https://opensource.org/licenses/GPL-3.0
+        .EXAMPLE
+            Remove-DbaOrphanUser -SqlInstance sqlserver2014a -SqlCredential $cred
 
-		.LINK
-			https://dbatools.io/Remove-DbaOrphanUser
+            Finds and drops all orphan users without matching Logins in all databases present on server 'sqlserver2014a'. SQL Server authentication will be used in connecting to the server.
 
-		.EXAMPLE
-			Remove-DbaOrphanUser -SqlInstance sql2005
+        .EXAMPLE
+            Remove-DbaOrphanUser -SqlInstance sqlserver2014a -Database db1, db2 -Force
 
-			Finds and drops all orphan users without matching Logins in all databases present on server 'sql2005'.
+            Finds and drops orphan users even if they have a matching Login on both db1 and db2 databases.
 
-		.EXAMPLE
-			Remove-DbaOrphanUser -SqlInstance sqlserver2014a -SqlCredential $cred
+        .EXAMPLE
+            Remove-DbaOrphanUser -SqlInstance sqlserver2014a -ExcludeDatabase db1, db2 -Force
 
-			Finds and drops all orphan users without matching Logins in all databases present on server 'sqlserver2014a'. SQL Server authentication will be used in connecting to the server.
+            Finds and drops orphan users even if they have a matching Login from all databases except db1 and db2.
 
-		.EXAMPLE
-			Remove-DbaOrphanUser -SqlInstance sqlserver2014a -Database db1, db2 -Force
+        .EXAMPLE
+            Remove-DbaOrphanUser -SqlInstance sqlserver2014a -User OrphanUser
 
-			Finds and drops orphan users even if they have a matching Login on both db1 and db2 databases.
+            Removes user OrphanUser from all databases only if there is no matching login.
 
-		.EXAMPLE
-			Remove-DbaOrphanUser -SqlInstance sqlserver2014a -ExcludeDatabase db1, db2 -Force
+        .EXAMPLE
+            Remove-DbaOrphanUser -SqlInstance sqlserver2014a -User OrphanUser -Force
 
-			Finds and drops orphan users even if they have a matching Login from all databases except db1 and db2.
+            Removes user OrphanUser from all databases even if they have a matching Login. Any schema that the user owns will change ownership to dbo.
 
-		.EXAMPLE
-			Remove-DbaOrphanUser -SqlInstance sqlserver2014a -User OrphanUser
-
-			Removes user OrphanUser from all databases only if there is no matching login.
-
-		.EXAMPLE
-			Remove-DbaOrphanUser -SqlInstance sqlserver2014a -User OrphanUser -Force
-
-			Removes user OrphanUser from all databases even if they have a matching Login. Any schema that the user owns will change ownership to dbo.
-
-	#>
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param (
         [parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -105,13 +100,14 @@ function Remove-DbaOrphanUser {
         [parameter(Mandatory = $false, ValueFromPipeline = $true)]
         [object[]]$User,
         [switch]$Force,
-        [switch][Alias('Silent')]$EnableException
+        [Alias('Silent')]
+        [switch]$EnableException
     )
 
     process {
 
         foreach ($Instance in $SqlInstance) {
-            Write-Message -Level Verbose -Message "Attempting to connect to $Instance."
+            Write-Message -Level Verbose -Message "Connecting to $Instance."
             try {
                 $server = Connect-SqlInstance -SqlInstance $Instance -SqlCredential $SqlCredential
             }
@@ -120,21 +116,13 @@ function Remove-DbaOrphanUser {
                 continue
             }
 
-            if (!$Database) {
-                $databases = $server.Databases | Where-Object { $_.IsSystemObject -eq $false -and $_.IsAccessible -eq $true }
-            }
-            else {
-                if ($pipedatabase) {
-                    $Source = $pipedatabase[0].parent.name
-                    $databases = $pipedatabase.name
-                }
-                else {
-                    $databases = $server.Databases | Where-Object { $_.IsSystemObject -eq $false -and $_.IsAccessible -eq $true -and ($Database -contains $_.Name) }
-                }
-            }
+            $DatabaseCollection = $server.Databases | Where-Object IsAccessible
 
+            if ($Database) {
+                $DatabaseCollection = $DatabaseCollection | Where-Object Name -In $Database
+            }
             if ($ExcludeDatabase) {
-                $databases = $server.Databases | Where-Object {$_.Name -notin $ExcludeDatabase -and $_.IsAccessible -eq $true -and $_.IsSystemObject -eq $false }
+                $DatabaseCollection = $DatabaseCollection | Where-Object Name -NotIn $ExcludeDatabase
             }
 
             $CallStack = Get-PSCallStack | Select-Object -Property *
@@ -146,10 +134,8 @@ function Remove-DbaOrphanUser {
                 $StackSource = $CallStack[($CallStack.Count - 2)].Command
             }
 
-            if ($databases) {
-                $start = [System.Diagnostics.Stopwatch]::StartNew()
-
-                foreach ($db in $databases) {
+            if ($DatabaseCollection) {
+                foreach ($db in $DatabaseCollection) {
                     try {
                         #if SQL 2012 or higher only validate databases with ContainmentType = NONE
                         if ($server.versionMajor -gt 10) {
@@ -171,14 +157,10 @@ function Remove-DbaOrphanUser {
                                 $User = $db.Users | Where-Object { $_.Login -eq "" -and ($_.ID -gt 4) -and (($_.Sid.Length -gt 16 -and $_.LoginType -eq [Microsoft.SqlServer.Management.Smo.LoginType]::SqlLogin) -eq $false) }
                             }
                             else {
-                                if ($pipedatabase) {
-                                    $Source = $pipedatabase[0].parent.name
-                                    $User = $pipedatabase.name
-                                }
-                                else {
-                                    #the fourth validation will remove from list sql users without login. The rule here is Sid with length higher than 16
-                                    $User = $db.Users | Where-Object { $_.Login -eq "" -and ($_.ID -gt 4) -and ($User -contains $_.Name) -and (($_.Sid.Length -gt 16 -and $_.LoginType -eq [Microsoft.SqlServer.Management.Smo.LoginType]::SqlLogin) -eq $false) }
-                                }
+
+                                #the fourth validation will remove from list sql users without login. The rule here is Sid with length higher than 16
+                                $User = $db.Users | Where-Object { $_.Login -eq "" -and ($_.ID -gt 4) -and ($User -contains $_.Name) -and (($_.Sid.Length -gt 16 -and $_.LoginType -eq [Microsoft.SqlServer.Management.Smo.LoginType]::SqlLogin) -eq $false) }
+
                             }
                         }
 
@@ -215,11 +197,11 @@ function Remove-DbaOrphanUser {
 
                                         foreach ($sch in $Schemas) {
                                             <#
-												On sql server 2008 or lower the EnumObjects method does not accept empty parameter.
-												0x1FFFFFFF is the way we can say we want everything known by those versions
+                                                On sql server 2008 or lower the EnumObjects method does not accept empty parameter.
+                                                0x1FFFFFFF is the way we can say we want everything known by those versions
 
-												When it is an higher version we can use empty to get all
-											#>
+                                                When it is an higher version we can use empty to get all
+                                            #>
                                             if ($server.versionMajor -lt 11) {
                                                 $NumberObjects = ($db.EnumObjects(0x1FFFFFFF) | Where-Object { $_.Schema -eq $sch.Name } | Measure-Object).Count
                                             }
@@ -235,8 +217,10 @@ function Remove-DbaOrphanUser {
                                                         $AlterSchemaOwner += "ALTER AUTHORIZATION ON SCHEMA::[$($sch.Name)] TO [dbo]`r`n"
 
                                                         [pscustomobject]@{
-                                                            Instance          = $server.Name
-                                                            Database          = $db.Name
+                                                            ComputerName      = $server.ComputerName
+                                                            InstanceName      = $server.ServiceName
+                                                            SqlInstance       = $server.DomainInstanceName
+                                                            DatabaseName      = $db.Name
                                                             SchemaName        = $sch.Name
                                                             Action            = "ALTER OWNER"
                                                             SchemaOwnerBefore = $sch.Owner
@@ -258,8 +242,10 @@ function Remove-DbaOrphanUser {
                                                         $DropSchema += "DROP SCHEMA [$($sch.Name)]"
 
                                                         [pscustomobject]@{
-                                                            Instance          = $server.Name
-                                                            Database          = $db.Name
+                                                            ComputerName      = $server.ComputerName
+                                                            InstanceName      = $server.ServiceName
+                                                            SqlInstance       = $server.DomainInstanceName
+                                                            DatabaseName      = $db.Name
                                                             SchemaName        = $sch.Name
                                                             Action            = "DROP"
                                                             SchemaOwnerBefore = $sch.Owner
@@ -274,8 +260,10 @@ function Remove-DbaOrphanUser {
                                                         $AlterSchemaOwner += "ALTER AUTHORIZATION ON SCHEMA::[$($sch.Name)] TO [dbo]`r`n"
 
                                                         [pscustomobject]@{
-                                                            Instance          = $server.Name
-                                                            Database          = $db.Name
+                                                            ComputerName      = $server.ComputerName
+                                                            InstanceName      = $server.ServiceName
+                                                            SqlInstance       = $server.DomainInstanceName
+                                                            DatabaseName      = $db.Name
                                                             SchemaName        = $sch.Name
                                                             Action            = "ALTER OWNER"
                                                             SchemaOwnerBefore = $sch.Owner
@@ -340,14 +328,6 @@ function Remove-DbaOrphanUser {
         }
     }
     end {
-
-        $totaltime = $start.Elapsed
-
-        #If the call don't come from Repair-DbaOrphanUser function, show elapsed time
-        if ($StackSource -ne "Repair-DbaOrphanUser") {
-            Write-Message -Level Verbose -Message "Total Elapsed time: $totaltime"
-        }
-
         Test-DbaDeprecation -DeprecatedOn "1.0.0" -EnableException:$false -Alias Remove-SqlOrphanUser
     }
 }

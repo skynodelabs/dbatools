@@ -63,14 +63,14 @@ function New-DbaCmConnection {
             By default, when something goes wrong we try to catch it, interpret it and give you a friendly warning message.
             This avoids overwhelming you with "sea of red" exceptions, but is inconvenient because it basically disables advanced scripting.
             Using this switch turns this "nice by default" feature off and enables you to catch exceptions with your own try/catch.
-            
+
         .NOTES
-            Tags: ComputerManagement
+            Tags: ComputerManagement, CIM
             Author: Fred Winmann (@FredWeinmann)
 
             Website: https://dbatools.io
             Copyright: (C) Chrissy LeMaire, clemaire@gmail.com
-            License: GNU GPL v3 https://opensource.org/licenses/GPL-3.0
+            License: MIT https://opensource.org/licenses/MIT
 
         .LINK
             https://dbatools.io/New-DbaCmConnection
@@ -91,7 +91,7 @@ function New-DbaCmConnection {
 
             Gathers a list of computers from a text file, then creates and registers connections for each of them, setting them to ...
             - use the credentials stored in $cred
-            - use the opzions stored in $options when connecting using CIM over WinRM
+            - use the options stored in $options when connecting using CIM over WinRM
             - not store credentials that are known to not work
             - to ignore explicitly specified credentials
 
